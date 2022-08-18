@@ -71,6 +71,21 @@ def LowPass(x, thresh = 0.63, wavelet="db4"):
     reconstructed_signal = pywt.waverec(coeff, wavelet, mode="per" )
     return reconstructed_signal
 
+'''ВЧ фильтр с SSA. n- количество компонент, из которых складывается результат'''
+def LowpassMSSA(y, ncomp=2): 
+    warnings.filterwarnings('ignore')
+    mssa = MSSA(n_components=12, #'variance_threshold',
+            variance_explained_threshold=0.98,#,'svht',
+            window_size=None,
+            verbose=False)
+    x=pd.DataFrame()
+    x['0']=y
+    mssa.fit(x)
+    tr = np.zeros(x.shape[0])
+    tr[:] = np.nan
+    tr = mssa.components_[0, :, :ncomp].sum(axis=1)
+    return tr
+
 '''Удаление выбросов по перцентилям'''
 def remoutliers(x, tile=99.0):
     s=np.percentile(x, tile)
