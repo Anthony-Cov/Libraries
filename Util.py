@@ -72,7 +72,7 @@ def LowPass(x, thresh = 0.63, wavelet="db4"):
     return reconstructed_signal
 
 '''ВЧ фильтр с SSA. n- количество компонент, из которых складывается результат'''
-def LowpassMSSA(y, ncomp=2): 
+def LowPassMSSA(y, ncomp=2): 
     warnings.filterwarnings('ignore')
     mssa = MSSA(n_components=12, #'variance_threshold',
             variance_explained_threshold=0.98,#,'svht',
