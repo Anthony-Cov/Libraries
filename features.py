@@ -138,6 +138,29 @@ def KSEntr(data):
         e.append(entropy(hist/l,  base=2)) #9/III-2021
     return max(e)
 
+'''Колмогоровская сложность по оценке Лемпеля — Зива'''
+def LempelZiv(S):
+    n=len(S)
+    i=0
+    C=u=v=vmax=1
+    while (u+v)<n:
+        if S[i+v] == S[u+v]:
+            v+=1
+        else:
+            vmax = max(v, vmax)
+            i+=1
+            v=1
+            if i==u:
+                C+=1
+                u+=vmax
+                i=0
+                vmax=v
+            else:
+                v=1
+    if v!=1:
+        C+=1
+    return C
+
 '''энтропия ряда по Шеннону'''
 def ShEntr(data, bin=25):
     hist,bins=np.histogram(data, bins=bin)
