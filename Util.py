@@ -89,7 +89,7 @@ def LowPassMSSA(y, ncomp=2):
 '''Удаление выбросов по перцентилям'''
 def remoutliers(x, tile=99.0):
     s=np.percentile(x, tile)
-    y=np.delete(x, np.where(x>s))
+    y=np.where(x<s, x, np.median(x))
     return y
 
 '''Наименьшие квадраты для одной переменной'''
