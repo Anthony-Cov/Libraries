@@ -39,7 +39,7 @@ def MSSAExplore(dat, fwd,split, prds=[], predictors=None):
     return m,d1np,d2np,d3np,d4,y 
 
 def MSSAUse(dat, fwd, prds=[], predictors=None):
-    x=GetDataPred(dat,prds)
+    x=GetDataPred(dat,prds, predictors)
     _,fc=MSSAModel(x,fwd)
     return fc[0]
 
