@@ -73,9 +73,9 @@ def LSTMForcastV(model, dat, p, predictors, fwd, length): #Предсказан�
     return (y*scf).reshape(y.shape[-1])
 '''Исследование LSTM split - метсто разделения на обучающую-тестовую,
 от конца ряда.'''
-def LSTMExploreV(dat, fwd, split, p=[], predictors=None): #Тестирование
+def LSTMExploreV(dat, fwd, split, prds=[], predictors=None): #Тестирование
     d=dat.data
-    predam=len(p)
+    predam=len(prds)
     b=len(d)-split
     X1,Y1, scf, length=GetDataV(d[:b], fwd)
     if not predam:
@@ -85,19 +85,19 @@ def LSTMExploreV(dat, fwd, split, p=[], predictors=None): #Тестирован�
     else:
         X2=[]
         Y2=[]
-        for j in p:    
+        for j in prds:    
             X, Y=GetPredictorV(predictors[j['prd']], fwd, length) ###<----### 7/IX-2021
             X2.append(X[fwd:-split])
             Y2.append(Y[fwd:-split])
         prediction_test, model=LSTMModelV(X1, Y1, X2, Y2,fwd)
-    y_pred=LSTMForcastV(model, d[:b], p, predictors, fwd, length)
+    y_pred=LSTMForcastV(model, d[:b], prds, predictors, fwd, length)
     m,d1np,d2np,d3np,d4 = Metr(y_pred, d[b:b+fwd])
     y=np.concatenate((prediction_test*scf, d[b-1:b], y_pred), axis=None)
     return m,d1np,d2np,d3np,d4,y
 '''Предсказание через мультипредикторную LSTM'''
 def LSTMUseV(dat, fwd, prds=[], predictors=None): #Истользование
     d=dat.data
-    predam=len(p)
+    predam=len(prds)
     X1,Y1, scf, length=GetDataV(d,fwd)
     if not predam:
         X2=np.array([[]]).reshape(0,1)
@@ -106,12 +106,12 @@ def LSTMUseV(dat, fwd, prds=[], predictors=None): #Истользование
     else:
         X2=[]
         Y2=[]
-        for j in p:    
+        for j in prds:    
             X, Y=GetPredictorV(predictors[j['prd']], fwd, length)
             X2.append(X[fwd:])
             Y2.append(Y[fwd:])
         prediction_test, model=LSTMModelV(X1, Y1, X2, Y2,fwd)
-    y=LSTMForcastV(model, d, p, predictors, fwd, length)
+    y=LSTMForcastV(model, d, prds, predictors, fwd, length)
     return y
 '''Подготовка данных data - Series'''
 def GetDataV(data, fwd):
