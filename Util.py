@@ -11,8 +11,9 @@ import pywt
 import warnings
 import matplotlib.pyplot as plt
 
-'''Подсчет метрик: x-модель, y-реальность; выход - ошибки:средняя, абс. средняя, процентная, симметричная процентная, СКО'''
-def Metr(x,y):
+'''Подсчет метрик регрессий: x-модель, y-реальность; выход - ошибки:средняя, абс. средняя, 
+процентная, симметричная процентная, СКО, R^2 - коэффициент детерминации'''
+def Metr(x,y): #x - predicted, y - real
     y=np.array(y)
     x=np.array(x)
     d=x-y
@@ -21,8 +22,9 @@ def Metr(x,y):
     d2=sum([abs(d[i]/y[i]) for i in range(len(y)) if y[i]!=0])/len([y[i]for i in range(len(y)) if y[i]!=0 ])*100
     d3=sum([abs(d[i]/(x[i]+y[i])*2) for i in range(len(y)) if (x[i]+y[i])!=0])/len([y[i] 
                                                         for i in range(len(y)) if (x[i]+y[i])!=0 ])*100
-    d4=np.std(d)
-    return m, d1, d2, d3, d4
+    d4=((x-y)**2).mean() #
+    r2=1 - d4/y.std()**2 #R^2
+    return m, d1, d2, d3, d4, r2
 
 '''Расчет F1 и Accuracy для бинарного классификатора'''
 def F1metr(x_pred, x_real): #классы: 1 - positive, O - negative
