@@ -92,25 +92,22 @@ def CCorrent(dat): #Корреляционная энтропия по-быст�
 '''Показатель Хёрста (R/S и H траектории)'''
 def HurstTraj(ser): #RS-trajectory of Hurst
     h=[]
-    z2=[0.]*len(ser)
-    z,_,_=Norm01(ser)
-    z2=np.ones(len(ser)).astype(float)
-    z2[np.where(z[1:]*z[:-1]!=0.)[0][1:]]=z[np.where(z[1:]*z[:-1]!=0.)][1:]/z[np.where(z[1:]*z[:-1]!=0.)][:-1]
-    z2=np.log(z2)
-    tau=np.arange(3,len(z))
+    z2,_,_=Norm01(ser)
+    # z2 = np.where(z==0., .0001, z)
+    # z2 = np.diff(np.log(z2))
+    # z2 = np.diff(z) 
+    l=len(z2)
+    tau=np.arange(3,l)
     for t in tau:
-        x=[]
-        m,s=np.mean(z2[:t]),np.std(z2[:t])
-        for i in range(t):
-            y=[(z2[j]-m) for j in range(i)]
-            x.append(sum(y))
+        m,s=np.mean(z2[:t]), np.std(z2[:t])
+        x=(z2[:t]-m).cumsum()
         r=max(x)-min(x)
         h.append(np.log(r/s) if r*s > 0.  else 0.)
     h=np.array(h)
-    tau=np.arange(len(z)-3)
-    t=np.zeros(len(z)-3).astype(float)
-    t[1:]=np.log(tau[1:]/2)
-    he,b = MLS(t,h)
+    t=np.array([0.])
+    t=np.concatenate([t, np.log(tau[1:]/2)])
+    # plt.plot(t[:l],h[:l])
+    he,b = MLS(t[:l//4],h[:l//4])
     mem=np.where([(h[i+1]-h[i])<0. for i in range(len(h)-1)])[0]
     mem=mem[0] if len(mem) else 0
     return t,h,he,mem #t-ln(tau); h - R/S trajectory (Hurst's tr=h/t); he - Hurst's exponent; mem - series' memory
