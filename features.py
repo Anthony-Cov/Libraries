@@ -31,9 +31,10 @@ def DimEmb(tser, eps=.1):
     n=len(ser)
     cn=[1]
     d0=0
+    h=hankel(ser)
     for k in range(2,n//2):#
         ent=sum(cn)
-        w=hankel(ser)[:n-k, :k]
+        w=h[:n-k, :k]
         ro=np.zeros([n-k, n-k])
         for i,j in combinations(np.arange(n-k), 2):
             norm=np.linalg.norm(w[i]-w[j])
