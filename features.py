@@ -7,6 +7,8 @@ import ctypes
 from os.path import split
 from inspect import getfile
 from scipy.stats import entropy
+from scipy.linalg import hankel
+from itertools import combinations
 import warnings
 import Libraries
 import gc
@@ -24,38 +26,34 @@ def NoiseFactor(data, axis=0, ddof=1):
 def RandWalk(ser):
     return abs(NoiseFactor(pd.Series(ser).diff().fillna(method='bfill')))
 
-'''Размерность вложения, корреляционная и заодно оценка энтропии'''
-def DimEmb(ser):
+def DimEmb(tser, eps=.1):
+    ser,_,_=Norm01(tser)
     n=len(ser)
-    ent=1
+    cn=[1]
     d0=0
     for k in range(2,n//2):#
-        w=[]
-        for i in range(n-k):
-            w.append(np.array([ser[j] for j in range(i, i+k)]))
-        ro=np.zeros((n-k)**2).reshape((n-k),(n-k))
-        for i in range(n-k):
-            for j in range(i,n-k):
-                ro[i,j]=np.linalg.norm(w[i]-w[j])
+        ent=sum(cn)
+        w=hankel(ser)[:n-k, :k]
+        ro=np.zeros([n-k, n-k])
+        for i,j in combinations(np.arange(n-k), 2):
+            norm=np.linalg.norm(w[i]-w[j])
+            ro[i,j]=norm
+            ro[j,i]=norm
         cl=[]
         cn=[]
         ls=np.linspace(ro[ro!=0].min(), ro.max(), num=20)
         for l in ls:
-            c=0
-            for i in range(n-k):
-                for j in range(i+1,n-k):
-                    c+=np.heaviside(l-ro[i,j],1)
+            c=np.heaviside(l-ro-np.diag(np.ones(n-k)),1).sum()//2
             cn.append(c/(n-k)**2)
             cl.append(np.log(c/(n-k)**2))
         dc=(cl[1]-cl[0])/(np.log(ls[1])-np.log(ls[0]))
-        if abs(dc-d0)> (ro.max() - ro.min())/50.: # dc-d0>0
+        if abs(dc-d0) > eps: # (ro.max() - ro.min())/50.: 
             d0=dc
-            ent=sum(cn)
         else:
-            k-=1
-            dc=d0
-            ent=abs(sum(cn)/ent) #9/III-2021 abs(np.log2(sum(cn)/ent))
             break
+    k-=1
+    dc=d0
+    ent=sum(cn)/ent
     return k, dc, ent #k - размерность вложения, dc - корреляционная размерность, ent - оценка энтропии.
 
 def CEmbDim(dat): #То же по-быстрому с C++ процедурой EmbDim.so'
