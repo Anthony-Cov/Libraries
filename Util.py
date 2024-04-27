@@ -57,13 +57,11 @@ def Norm01(x):
 def Nback(x_n, mi, ma):
     return x_n*ma+mi
 
-'''скользящее среднее'''
-def  MovingAverage(x, numb=10):
-    n=len(x)//numb
-    ma=list(x[:n])
-    for j in range(len(x)-n):
-        ma.append(np.mean(x[j:j+n]))
-    return np.array(ma)
+'''Скользящее среднее для numpy'''
+def moving_average(a, n=4):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
 
 '''ВЧ фильтр с вейвлет-преобразованием'''
 def LowPass(x, thresh = 0.63, wavelet="db4"):
