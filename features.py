@@ -93,11 +93,7 @@ def CCorrent(dat): #Корреляционная энтропия по-быст�
 def HurstTraj(ser): #RS-trajectory of Hurst
     h=[]
     z2,_,_=Norm01(ser)
-    # z2 = np.where(z==0., .0001, z)
-    # z2 = np.diff(np.log(z2))
-    # z2 = np.diff(z) 
-    l=len(z2)
-    tau=np.arange(3,l)
+    tau=np.arange(3,len(z2))
     for t in tau:
         m,s=np.mean(z2[:t]), np.std(z2[:t])
         x=(z2[:t]-m).cumsum()
@@ -106,11 +102,12 @@ def HurstTraj(ser): #RS-trajectory of Hurst
     h=np.array(h)
     t=np.array([0.])
     t=np.concatenate([t, np.log(tau[1:]/2)])
-    # plt.plot(t[:l],h[:l])
-    he,b = MLS(t[:l//4],h[:l//4])
+    l=int(len(t)/50)
+    he,b = MLS(t[:l],h[:l])
     mem=np.where([(h[i+1]-h[i])<0. for i in range(len(h)-1)])[0]
     mem=mem[0] if len(mem) else 0
     return t,h,he,mem #t-ln(tau); h - R/S trajectory (Hurst's tr=h/t); he - Hurst's exponent; mem - series' memory
+
 def CHurst(dat): #То же по-быстрому с C++ процедурой HurstExp.so
     nw=1000
     if len(dat)>1000:
