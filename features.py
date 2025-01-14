@@ -26,6 +26,7 @@ def NoiseFactor(data, axis=0, ddof=1):
 def RandWalk(ser):
     return abs(NoiseFactor(pd.Series(ser).diff().fillna(method='bfill')))
 
+'''Размерность вложения по корреляционному интегралу'''
 def DimEmb(tser, eps=.1):
     ser,_,_=Norm01(tser)
     n=len(ser)
