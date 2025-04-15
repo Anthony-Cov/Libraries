@@ -8,6 +8,7 @@ from os.path import split
 from inspect import getfile
 from scipy.stats import entropy
 from scipy.linalg import hankel
+from sklearn.preprocessing import MinMaxScaler
 from itertools import combinations
 import warnings
 import Libraries
@@ -123,14 +124,31 @@ def CHurst(dat): #То же по-быстрому с C++ процедурой Hu
     return he.HurstExp(arr, len(y))
 
 '''Kolmogorov-Sinai Entropy'''
-def KSEntr(data):
-    l=len(data)
-    e=[]
-    for i in range(1,l//2+1):
-        b=l//i
-        hist,bins=np.histogram(data, bins=b)
-        e.append(entropy(hist/l,  base=2)) #9/III-2021
-    return max(e)
+def ksent(ts, n_intervals=200):
+    # Normalize signal values between [0, 1]
+    scaler = MinMaxScaler()
+    normalized_ts = scaler.fit_transform(ts.values.reshape(-1, 1))
+    
+    # Encode signal in symbolic form based on specified number of intervals
+    intervals = (normalized_ts.max() - normalized_ts.min()) / n_intervals
+    encoded_signal = np.digitize(normalized_ts.flatten(), bins=np.arange(normalized_ts.min(), normalized_ts.max()+intervals, intervals), right=False)
+    n=len(encoded_signal)
+    # Initialize distance array
+    dist = np.zeros(n)
+    # Calculate distances between consecutive points
+    for i in range(1, len(encoded_signal)):
+        dist[i] = abs(encoded_signal[i]-encoded_signal[i-1])
+        
+    # Estimate KS entropy (symbolic transfer operator method)
+    dist_count = {}
+    for d in dist:
+        if d in dist_count.keys():
+            dist_count[d] += 1
+        else:
+            dist_count[d] = 1
+            
+    dist_entropy = np.sum([p * np.log(p) for p in [v/n for v in dist_count.values()] if p!= 0])    
+    return -dist_entropy
 
 '''Колмогоровская сложность по оценке Лемпеля — Зива'''
 def LempelZiv(S):
