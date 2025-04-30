@@ -8,6 +8,7 @@ from os.path import split
 from inspect import getfile
 from scipy.stats import entropy
 from scipy.linalg import hankel
+from scipy.spatial import KDTree
 from sklearn.preprocessing import MinMaxScaler
 from itertools import combinations
 import warnings
@@ -124,31 +125,34 @@ def CHurst(dat): #То же по-быстрому с C++ процедурой Hu
     return he.HurstExp(arr, len(y))
 
 '''Kolmogorov-Sinai Entropy'''
-def ksent(ts, n_intervals=200):
-    # Normalize signal values between [0, 1]
-    scaler = MinMaxScaler()
-    normalized_ts = scaler.fit_transform(ts.values.reshape(-1, 1))
-    
-    # Encode signal in symbolic form based on specified number of intervals
-    intervals = (normalized_ts.max() - normalized_ts.min()) / n_intervals
-    encoded_signal = np.digitize(normalized_ts.flatten(), bins=np.arange(normalized_ts.min(), normalized_ts.max()+intervals, intervals), right=False)
-    n=len(encoded_signal)
-    # Initialize distance array
-    dist = np.zeros(n)
-    # Calculate distances between consecutive points
-    for i in range(1, len(encoded_signal)):
-        dist[i] = abs(encoded_signal[i]-encoded_signal[i-1])
-        
-    # Estimate KS entropy (symbolic transfer operator method)
-    dist_count = {}
-    for d in dist:
-        if d in dist_count.keys():
-            dist_count[d] += 1
-        else:
-            dist_count[d] = 1
-            
-    dist_entropy = np.sum([p * np.log(p) for p in [v/n for v in dist_count.values()] if p!= 0])    
-    return -dist_entropy
+def ksent(time_series, k=5, tau=1, eps=1e-10):
+    """
+    Вычисляет энтропию Колмогорова-Синая для временного ряда.
+
+    Параметры:
+    - time_series: одномерный временной ряд (numpy array).
+    - k: количество ближайших соседей (по умолчанию 3).
+    - tau: временной лаг для построения вложений (по умолчанию 1).
+    - eps: маленькое значение для избежания деления на ноль (по умолчанию 1e-10).
+
+    Возвращает:
+    - ks_entropy: оценка энтропии Колмогорова-Синая.
+    """
+    n = len(time_series)
+    m = n - (k - 1) * tau  # количество вложений
+    # Создаем вложения (embedding)
+    embeddings = np.array([time_series[i:i + k * tau:tau] for i in range(m)])
+    # Используем KDTree для поиска ближайших соседей
+    tree = KDTree(embeddings)
+    distances = []
+    for i in range(m):
+        # Ищем k+1 ближайших соседей (включая саму точку)
+        dist, _ = tree.query(embeddings[i], k + 1)
+        distances.append(dist[-1])  # берем расстояние до k-го соседа
+    distances = np.array(distances)
+    # Вычисляем KS энтропию
+    ks_entropy = np.mean(np.log(distances + eps)) / tau
+    return ks_entropy
 
 '''Колмогоровская сложность по оценке Лемпеля — Зива'''
 def LempelZiv(S):
